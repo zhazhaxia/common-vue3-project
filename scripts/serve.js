@@ -12,6 +12,10 @@ const projectsDir = path.join(projectRoot, 'src/projects')
 // 存储项目服务器实例，使用项目名称作为键
 const projectServers = new Map()
 
+// 存储当前活跃的项目
+let activeProject = null
+
+
 // 获取项目路径
 function getProjectPath(projectName) {
   const projectPath = path.join(projectsDir, projectName)
@@ -38,10 +42,14 @@ async function getProjectServer(projectName, env) {
     throw new Error(`项目 ${projectName} 不存在`)
   }
   
-  console.log(`正在启动 ${projectName} 的 Vite 服务器...`)
+  console.log(`[${new Date().toISOString()}] 正在启动 ${projectName} 的 Vite 服务器...`)
   console.log(`项目路径: ${projectPath}`)
+  console.log(`环境配置: ${env}`)
   
   // 为每个项目创建独立的Vite服务器实例
+  // 生成唯一的WebSocket端口，避免端口冲突
+  const wsPort = 3001 + Math.abs(projectName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 1000
+  
   const viteServer = await createServer({
     // 禁用配置文件，确保每个项目使用独立的配置
     configFile: false,
@@ -67,6 +75,12 @@ async function getProjectServer(projectName, env) {
     // 使用中间件模式
     server: {
       middlewareMode: true,
+      // 明确禁用HMR
+      hmr: false,
+      // 禁用WebSocket服务器
+      websocket: false,
+      // 为每个项目指定唯一的端口，避免冲突
+      port: wsPort,
       fs: {
         // 允许访问项目目录外的文件
         strict: false
@@ -91,9 +105,23 @@ async function getProjectServer(projectName, env) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${port}`)
   
+  // 添加缓存控制头，防止304重定向问题
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+  res.setHeader('Pragma', 'no-cache')
+  res.setHeader('Expires', '0')
+  res.setHeader('X-Response-Time', new Date().toISOString())
+  
+  // 为每个项目添加唯一的ETag前缀
+  const generateProjectETag = (projectName, content) => {
+    return `"${projectName}-${content}"`
+  }
+  
   // 解析项目名称
   const pathParts = url.pathname.split('/').filter(Boolean)
   const projectName = pathParts[0]
+  
+  // 添加项目名称到响应头
+  res.setHeader('X-Project-Name', projectName || 'root')
   
   // 过滤掉系统路径和非项目路径
   const systemPaths = ['.well-known', 'favicon.ico', 'robots.txt', 'sitemap.xml']
@@ -176,6 +204,44 @@ const server = http.createServer(async (req, res) => {
   // 获取环境参数
   const env = url.searchParams.get('env') || 'test'
   
+  // 记录当前访问的项目
+  const currentProject = projectName
+  
+  // 确保只有一个项目生效
+  if (currentProject) {
+    // 如果访问的是新项目，清理所有其他项目的资源
+    if (activeProject !== currentProject) {
+      console.log(`[${new Date().toISOString()}] 检测到项目切换: ${activeProject} -> ${currentProject}`)
+      
+      // 清理所有其他项目的资源
+      const projectsToClean = []
+      projectServers.forEach((server, projectName) => {
+        projectsToClean.push(projectName)
+      })
+      
+      // 同步清理资源，确保端口被释放
+      for (const projectName of projectsToClean) {
+        console.log(`[${new Date().toISOString()}] 清理项目 ${projectName} 的所有资源`)
+        const server = projectServers.get(projectName)
+        if (server) {
+          try {
+            // 关闭服务器实例
+            await server.close()
+            console.log(`[${new Date().toISOString()}] 项目 ${projectName} 服务器已成功关闭`)
+          } catch (err) {
+            console.error(`关闭项目 ${projectName} 服务器失败:`, err)
+          }
+        }
+        projectServers.delete(projectName)
+        console.log(`[${new Date().toISOString()}] 项目 ${projectName} 的资源已清理`)
+      }
+      
+      // 设置当前项目为活跃项目
+      activeProject = currentProject
+      console.log(`[${new Date().toISOString()}] 项目 ${currentProject} 已设置为活跃项目`)
+    }
+  }
+  
   // 检查项目是否存在，避免不必要的错误
   const projectPath = getProjectPath(projectName)
   if (!projectPath) {
@@ -215,7 +281,7 @@ const server = http.createServer(async (req, res) => {
     // 确保保留查询参数
     const finalUrl = rewrittenUrl + url.search
     
-    console.log(`[${new Date().toISOString()}] ${req.method} ${originalUrl} -> ${finalUrl}`)
+    console.log(`[${new Date().toISOString()}] ${req.method} ${originalUrl} -> ${finalUrl} (活跃项目: ${activeProject})`)
     
     // 修改请求URL为重写后的URL
     req.url = finalUrl
@@ -228,65 +294,28 @@ const server = http.createServer(async (req, res) => {
     
   } catch (err) {
     console.error(`处理请求失败:`, err)
-    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' })
+    res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' })
     res.end(err.message)
   }
 })
 
-// 处理WebSocket连接
-server.on('upgrade', async (req, socket, head) => {
-  const url = new URL(req.url, `http://localhost:${port}`)
-  
-  // 解析项目名称
-  const pathParts = url.pathname.split('/').filter(Boolean)
-  const projectName = pathParts[0]
-  
-  if (!projectName) {
-    socket.destroy()
-    return
-  }
-  
-  try {
-    // 获取项目服务器
-    const env = url.searchParams.get('env') || 'test'
-    const viteServer = await getProjectServer(projectName, env)
-    
-    // 重写路径，去掉项目名前缀
-    const projectPathPrefix = `/${projectName}`
-    const rewrittenUrl = url.pathname.startsWith(projectPathPrefix) 
-      ? url.pathname.substring(projectPathPrefix.length) || '/' 
-      : url.pathname
-    
-    // 确保保留查询参数
-    const finalUrl = rewrittenUrl + url.search
-    
-    console.log(`[${new Date().toISOString()}] WebSocket ${url.pathname} -> ${finalUrl}`)
-    
-    // 保存原始URL并修改为重写后的URL
-    const originalWebSocketUrl = req.url
-    req.url = finalUrl
-    
-    console.log(`[${new Date().toISOString()}] WebSocket ${originalWebSocketUrl} -> ${finalUrl}`)
-    
-    // 处理WebSocket连接
-    if (viteServer.ws) {
-      viteServer.ws.handleUpgrade(req, socket, head, (ws) => {
-        viteServer.ws.emit('connection', ws, req)
-      })
-    } else {
-      socket.destroy()
-    }
-    
-    // 恢复原始URL
-    req.url = originalWebSocketUrl
-  } catch (err) {
-    console.error(`处理WebSocket连接失败:`, err)
-    socket.destroy()
-  }
+// 完全移除WebSocket处理逻辑，避免所有WebSocket连接问题
+// 由于我们禁用了HMR，不需要WebSocket连接
+server.on('upgrade', (req, socket, head) => {
+  console.log(`[${new Date().toISOString()}] 拒绝所有WebSocket连接: ${req.url} (HMR已禁用)`)
+  // 发送400错误响应后关闭连接
+  socket.write('HTTP/1.1 400 Bad Request\r\n\r\n')
+  socket.destroy()
 })
 
 server.listen(port, () => {
   console.log(`\n🚀 开发服务器启动成功！`)
   console.log(`📝 访问地址: http://localhost:${port}`)
+  console.log(`📋 首页显示所有项目列表`)
+  console.log(`🔧 访问具体项目路径时自动触发构建`)
+  console.log(`🌍 开发环境默认使用 .env.test 配置`)
+  console.log(`🔄 访问新项目时会自动清空其他项目的构建和连接`)
+  console.log(`⚡ 确保每个项目的开发环境完全隔离`)
+  console.log(`🚫 已完全禁用HMR和WebSocket连接，避免页面刷新问题`)
   console.log()
 })

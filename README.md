@@ -4,12 +4,19 @@ Vite Vue3 TypeScript Monorepo 脚手架
 
 核心特性
 
-🚀 按需构建 - 访问项目时才触发构建，避免资源浪费
-🔧 环境隔离 - 每个项目独立的环境配置，支持 test/prod 等多环境
-📦 模板化 - 基于模板快速创建新项目，保持项目结构统一
-🛠️ 公共工具 - 统一的 src/common 目录，存放项目间共享的工具和函数
-⚡ TypeScript 支持 - 完整的 TypeScript 类型定义和类型检查
-🎯 类型安全 - 所有公共模块都有完整的类型定义
+- 🚀 按需构建 - 访问项目时才触发构建，避免资源浪费
+  - 比如访问http://localhost:3000/test1/index.html，只会构建和调试test1项目，而不会构建其他项目，访问test2项目时也只会构建和调试test2项目
+- 🔧 环境隔离 - 每个项目独立的环境配置，支持 test/prod 等多环境
+- 📦 模板化 - 基于模板快速创建新项目，保持项目结构统一
+  - 支持使用yarn run create projectName来创建新项目
+  - 新项目会基于template目录下的模板创建，保持项目结构统一
+- 🛠️ 公共工具 - 统一的 src/common 目录，存放项目间共享的工具和函数
+- ⚡ TypeScript 支持 - 完整的 TypeScript 类型定义和类型检查
+- 🎯 类型安全 - 所有公共模块都有完整的类型定义
+- 打包 - 支持使用yarn run build projectName来打包项目，支持test/prod等多环境
+  - 比如使用yarn run build test1 --env=test来打包test1项目的测试环境
+  - 打包后的文件会输出到dist目录下，每个项目的打包文件会放在对应的子目录下，比如test1项目的打包文件会放在dist/test1目录下
+  - 每个项目的打包文件都有一个对应的index.html文件，用于访问项目
 
 目录结构
 
