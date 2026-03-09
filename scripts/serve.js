@@ -15,6 +15,12 @@ const projectServers = new Map()
 // 存储当前活跃的项目
 let activeProject = null
 
+// 存储项目的WebSocket连接，使用项目名称作为键
+const projectWebSockets = new Map()
+
+// 防止并发创建服务器实例
+const serverCreationLocks = new Map()
+
 // 获取项目路径
 function getProjectPath(projectName) {
   const projectPath = path.join(projectsDir, projectName)
@@ -34,47 +40,77 @@ async function getProjectServer(projectName, env) {
     return projectServers.get(projectName)
   }
   
+  // 检查是否正在创建服务器实例
+  if (serverCreationLocks.has(projectName)) {
+    console.log(`[${new Date().toISOString()}] 项目 ${projectName} 的服务器正在创建中，等待完成...`)
+    // 等待创建完成
+    while (serverCreationLocks.has(projectName)) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+      if (projectServers.has(projectName)) {
+        return projectServers.get(projectName)
+      }
+    }
+  }
+  
+  // 获取项目路径
   const projectPath = getProjectPath(projectName)
   if (!projectPath) {
     throw new Error(`项目 ${projectName} 不存在`)
   }
   
-  console.log(`[${new Date().toISOString()}] 正在启动 ${projectName} 的 Vite 服务器...`)
-  console.log(`项目路径: ${projectPath}`)
-  console.log(`环境配置: ${env}`)
+  // 加锁，防止并发创建
+  serverCreationLocks.set(projectName, true)
   
-  // 为每个项目创建独立的Vite服务器实例
-  const viteServer = await createServer({
-    configFile: false,
-    plugins: [vue()],
-    root: projectPath,
-    base: `/${projectName}/`,
-    resolve: {
-      alias: {
-        '@': path.join(projectPath, 'src'),
-        '@common': path.join(projectRoot, 'src/common')
-      }
-    },
-    define: {
-      'import.meta.env.PROJECT_NAME': JSON.stringify(projectName),
-      'import.meta.env.ENV_TYPE': JSON.stringify(env),
-      'import.meta.env.BASE_URL': JSON.stringify(`/${projectName}/`)
-    },
-    server: {
-      middlewareMode: true,
-      fs: {
-        strict: false
-      }
-    },
-    cacheDir: path.join(projectPath, 'node_modules', '.vite'),
-    clearScreen: false,
-    logLevel: 'info'
-  })
-  
-  projectServers.set(projectName, viteServer)
-  console.log(`${projectName} 的 Vite 服务器启动成功！`)
-  
-  return viteServer
+  try {
+    console.log(`[${new Date().toISOString()}] 正在启动 ${projectName} 的 Vite 服务器...`)
+    console.log(`项目路径: ${projectPath}`)
+    console.log(`环境配置: ${env}`)
+    
+    // 为每个项目生成唯一的WebSocket端口
+    const wsPort = 3001 + Math.abs(projectName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 1000
+    console.log(`项目 ${projectName} 的WebSocket端口: ${wsPort}`)
+    
+    // 为每个项目创建独立的Vite服务器实例
+    const viteServer = await createServer({
+      configFile: false,
+      plugins: [vue()],
+      root: projectPath,
+      base: `/${projectName}/`,
+      resolve: {
+        alias: {
+          '@': path.join(projectPath, 'src'),
+          '@common': path.join(projectRoot, 'src/common')
+        }
+      },
+      define: {
+        'import.meta.env.PROJECT_NAME': JSON.stringify(projectName),
+        'import.meta.env.ENV_TYPE': JSON.stringify(env),
+        'import.meta.env.BASE_URL': JSON.stringify(`/${projectName}/`)
+      },
+      server: {
+        middlewareMode: true,
+        hmr: {
+          protocol: 'ws',
+          port: wsPort,
+          path: `/${projectName}/hmr`
+        },
+        fs: {
+          strict: false
+        }
+      },
+      cacheDir: path.join(projectPath, 'node_modules', '.vite'),
+      clearScreen: false,
+      logLevel: 'info'
+    })
+    
+    projectServers.set(projectName, viteServer)
+    console.log(`${projectName} 的 Vite 服务器启动成功！`)
+    
+    return viteServer
+  } finally {
+    // 释放锁
+    serverCreationLocks.delete(projectName)
+  }
 }
 
 // 主服务器
@@ -174,7 +210,24 @@ const server = http.createServer(async (req, res) => {
     console.log(`[${new Date().toISOString()}] 检测到项目切换: ${activeProject} -> ${projectName}`)
     
     // 清理所有项目资源
-    for (const [name, server] of projectServers.entries()) {
+    const serversToClose = [...projectServers.entries()]
+    projectServers.clear() // 先清空，避免新请求创建新实例
+    
+    // 清理WebSocket连接
+    for (const [name, sockets] of projectWebSockets.entries()) {
+      console.log(`[${new Date().toISOString()}] 清理项目 ${name} 的WebSocket连接，共 ${sockets.size} 个`)
+      sockets.forEach(socket => {
+        try {
+          socket.destroy()
+        } catch (err) {
+          console.error(`关闭WebSocket连接失败:`, err)
+        }
+      })
+    }
+    projectWebSockets.clear()
+    
+    // 关闭服务器实例
+    for (const [name, server] of serversToClose) {
       console.log(`[${new Date().toISOString()}] 清理项目 ${name} 的资源`)
       try {
         await server.close()
@@ -184,8 +237,10 @@ const server = http.createServer(async (req, res) => {
       }
     }
     
-    // 清空服务器实例
-    projectServers.clear()
+    // 清空锁
+    serverCreationLocks.clear()
+    
+    // 设置活跃项目
     activeProject = projectName
     console.log(`[${new Date().toISOString()}] 项目 ${projectName} 已设置为活跃项目`)
   }
@@ -245,27 +300,55 @@ const server = http.createServer(async (req, res) => {
 
 // 处理WebSocket连接
 server.on('upgrade', (req, socket, head) => {
-  const url = new URL(req.url, `http://localhost:${port}`)
-  const pathParts = url.pathname.split('/').filter(Boolean)
-  const projectName = pathParts[0]
-  
-  // 只处理活跃项目的连接
-  if (activeProject !== projectName) {
-    socket.write('HTTP/1.1 400 Bad Request\r\n\r\n')
-    socket.destroy()
-    return
-  }
-  
-  // 获取项目服务器
-  const viteServer = projectServers.get(projectName)
-  if (viteServer && viteServer.middlewares.handleUpgrade) {
-    // 让Vite处理WebSocket升级
-    viteServer.middlewares.handleUpgrade(req, socket, head, (ws) => {
-      viteServer.middlewares.emit('connection', ws, req)
-    })
-  } else {
-    socket.write('HTTP/1.1 400 Bad Request\r\n\r\n')
-    socket.destroy()
+  try {
+    const url = new URL(req.url, `http://localhost:${port}`)
+    const pathParts = url.pathname.split('/').filter(Boolean)
+    const projectName = pathParts[0]
+    
+    // 只处理活跃项目的连接
+    if (activeProject !== projectName) {
+      console.log(`[${new Date().toISOString()}] 拒绝非活跃项目 ${projectName} 的WebSocket连接`)
+      socket.write('HTTP/1.1 400 Bad Request\r\n\r\n')
+      socket.destroy()
+      return
+    }
+    
+    // 获取项目服务器
+    const viteServer = projectServers.get(projectName)
+    if (viteServer && viteServer.ws && viteServer.ws.handleUpgrade) {
+      // 让Vite处理WebSocket升级
+      viteServer.ws.handleUpgrade(req, socket, head, (ws) => {
+        console.log(`[${new Date().toISOString()}] 建立项目 ${projectName} 的WebSocket连接`)
+        
+        // 存储WebSocket连接
+        if (!projectWebSockets.has(projectName)) {
+          projectWebSockets.set(projectName, new Set())
+        }
+        projectWebSockets.get(projectName).add(ws)
+        
+        // 监听连接关闭事件
+        ws.on('close', () => {
+          console.log(`[${new Date().toISOString()}] 项目 ${projectName} 的WebSocket连接关闭`)
+          if (projectWebSockets.has(projectName)) {
+            projectWebSockets.get(projectName).delete(ws)
+          }
+        })
+        
+        viteServer.ws.emit('connection', ws, req)
+      })
+    } else {
+      console.log(`[${new Date().toISOString()}] 项目 ${projectName} 的服务器实例不存在或不支持WebSocket`)
+      socket.write('HTTP/1.1 400 Bad Request\r\n\r\n')
+      socket.destroy()
+    }
+  } catch (err) {
+    console.error(`处理WebSocket连接失败:`, err)
+    try {
+      socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n')
+      socket.destroy()
+    } catch (e) {
+      // 忽略错误
+    }
   }
 })
 
@@ -277,5 +360,6 @@ server.listen(port, () => {
   console.log(`🌍 开发环境默认使用 .env.test 配置`)
   console.log(`🔄 访问新项目时会自动清空其他项目的构建和连接`)
   console.log(`⚡ 确保每个项目的开发环境完全隔离`)
+  console.log(`🔥 已启用HMR功能，支持热模块替换`)
   console.log()
 })
