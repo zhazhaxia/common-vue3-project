@@ -6,7 +6,10 @@
   "scripts": {
     "serve": "node scripts/serve.js --mode test",
     "build": "node scripts/build.js --mode prod",
-    "create": "node scripts/create.js"
+    "create": "node scripts/create.js",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "prettier": "prettier --write . --ignore-path .gitignore",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -15,10 +18,23 @@
     "typescript": "^5.3.3",
     "vite": "^5.0.0",
     "vue": "^3.4.0",
-    "vue-tsc": "^1.8.27"
+    "vue-tsc": "^1.8.27",
+    "eslint": "^8.56.0",
+    "eslint-plugin-vue": "^9.19.2",
+    "@vue/eslint-config-typescript": "^12.0.0",
+    "@vue/eslint-config-prettier": "^8.0.0",
+    "prettier": "^3.2.4",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "lint-staged": {
+    "*.{vue,js,jsx,cjs,mjs,ts,tsx,cts,mts}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "pinia": "^3.0.4",
