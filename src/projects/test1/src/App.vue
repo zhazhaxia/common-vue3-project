@@ -31,60 +31,61 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
-import { useCounterStore } from './store/counter'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
+import { useCounterStore } from './store/counter';
 // import { debounce } from "@common/utils"
 // console.log(debounce)
+console.log('=======start=====');
 
 // 环境变量
-const projectName = import.meta.env.VITE_APP_TITLE || '未命名项目'
-const currentEnv = computed(() => import.meta.env.ENV_TYPE || 'unknown')
-const apiBaseUrl = computed(() => import.meta.env.VITE_APP_API_BASE_URL || '未配置')
+const projectName = import.meta.env.VITE_APP_TITLE || '未命名项目';
+const currentEnv = computed(() => import.meta.env.ENV_TYPE || 'unknown');
+const apiBaseUrl = computed(() => import.meta.env.VITE_APP_API_BASE_URL || '未配置');
 
 // Pinia store
-const counterStore = useCounterStore()
+const counterStore = useCounterStore();
 
 // 响应式数据
-const loadTime = ref('')
-const countChangeTimes = ref(0)
-const timer = ref<number | null>(null)
+const loadTime = ref('');
+const countChangeTimes = ref(0);
+const timer = ref<number | null>(null);
 
 // 生命周期 - 组件挂载
 onMounted(() => {
-  console.log('组件已挂载')
-  loadTime.value = new Date().toLocaleString()
+  console.log('组件已挂载');
+  loadTime.value = new Date().toLocaleString();
 
   // 模拟定时器
   timer.value = window.setInterval(() => {
-    console.log('定时器执行')
-  }, 5000)
-})
+    console.log('定时器执行');
+  }, 5000);
+});
 
 // 生命周期 - 组件卸载
 onUnmounted(() => {
-  console.log('组件已卸载')
+  console.log('组件已卸载');
   if (timer.value) {
-    clearInterval(timer.value)
+    clearInterval(timer.value);
   }
-})
+});
 
 // 监听数据变化
 watch(
   () => counterStore.count,
   (newValue, oldValue) => {
-    console.log(`计数器从 ${oldValue} 变为 ${newValue}`)
-    countChangeTimes.value++
+    console.log(`计数器从 ${oldValue} 变为 ${newValue}`);
+    countChangeTimes.value++;
   }
-)
+);
 
 // 深度监听示例
 watch(
   counterStore,
   (newStore) => {
-    console.log('Store 发生变化:', newStore)
+    console.log('Store 发生变化:', newStore);
   },
   { deep: true }
-)
+);
 </script>
 
 <style scoped>
