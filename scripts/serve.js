@@ -87,7 +87,6 @@ async function getProjectServer(projectName, env, projectEnv = {}) {
       base: `/projects/${projectName}/`,
       resolve: {
         alias: {
-          '@': path.join(projectPath, 'src'),
           '@common': path.join(projectRoot, 'src/common')
         }
       },

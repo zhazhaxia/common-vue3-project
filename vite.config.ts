@@ -44,7 +44,6 @@ export default defineConfig(({ mode }) => {
     base: `/${projectName}/`,
     resolve: {
       alias: {
-        '@': path.resolve(projectPath, 'src'),
         '@common': path.resolve(process.cwd(), 'src/common')
       }
     },

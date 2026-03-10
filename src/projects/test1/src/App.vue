@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <header>
-      <h1>{{ projectName }} - Vue3 + TypeScript 项目11</h1>
+      <h1>{{ projectName }} - Vue3 + TypeScript 项目111</h1>
       <nav>
         <router-link to="/">首页</router-link>
         <router-link to="/about">关于</router-link>
@@ -33,6 +33,8 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useCounterStore } from './store/counter'
+// import { debounce } from "@common/utils"
+// console.log(debounce)
 
 // 环境变量
 const projectName = import.meta.env.VITE_APP_TITLE || '未命名项目'
@@ -51,7 +53,7 @@ const timer = ref<number | null>(null)
 onMounted(() => {
   console.log('组件已挂载')
   loadTime.value = new Date().toLocaleString()
-  
+
   // 模拟定时器
   timer.value = window.setInterval(() => {
     console.log('定时器执行')
@@ -96,7 +98,7 @@ header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 1.5rem 2rem;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 header h1 {
@@ -118,13 +120,13 @@ nav a {
 }
 
 nav a:hover {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .counter {
   margin-top: 1rem;
   padding: 1rem;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 8px;
 }
 
@@ -147,14 +149,14 @@ nav a:hover {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 4px;
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
   color: white;
   cursor: pointer;
   transition: background 0.3s;
 }
 
 .counter-buttons button:hover {
-  background: rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 main {
@@ -168,7 +170,7 @@ footer {
   padding: 1.5rem 2rem;
   text-align: center;
   color: #666;
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.05);
 }
 
 footer p {

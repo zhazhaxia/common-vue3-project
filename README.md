@@ -6,13 +6,19 @@
 
 - 🚀 按需构建 - 访问项目时才触发构建，避免资源浪费
   - 比如访问 http://localhost:8963/projects/test1/index.html 只会构建和调试test1项目，而不会构建其他项目，访问test2项目时也只会构建和调试test2项目
+
 - 🔧 环境隔离 - 每个项目独立的环境配置，支持 test/prod 等多环境
+
 - 📦 模板化 - 基于模板快速创建新项目，保持项目结构统一
   - 支持使用yarn run create projectName来创建新项目
   - 新项目会基于template目录下的模板创建，保持项目结构统一
+
 - 🛠️ 公共工具 - 统一的 src/common 目录，存放项目间共享的工具和函数
+
 - ⚡ TypeScript 支持 - 完整的 TypeScript 类型定义和类型检查
+
 - 🎯 类型安全 - 所有公共模块都有完整的类型定义
+
 - 打包 - 支持使用yarn run build --projects=projectName来打包项目，支持test/prod等多环境
   - 比如使用yarn run build --projects=test1 --mode=prod来打包test1项目的生产环境
   - 打包后的文件会输出到dist目录下，每个项目的打包文件会放在对应的子目录下，比如test1项目的打包文件会放在dist/projects/test1目录下
@@ -48,8 +54,8 @@
 
 开发服务器启动后，访问：
 
-http://localhost:3000 - 查看项目列表
-http://localhost:3000/project1 - 访问 project1（首次访问会自动构建）
+http://localhost:8963 - 查看项目列表
+http://localhost:8963/projects/project1 - 访问 project1（首次访问会自动构建）
 
 4. 构建项目
 
@@ -120,7 +126,7 @@ plaintext
 
 构建项目
 
-`yarn run build <项目名> --mode=<环境>`
+`yarn run build --projects=<项目名> --mode=<环境>`
 
 
 参数说明：
@@ -130,9 +136,9 @@ plaintext
 
 示例：
 
-`yarn run build project1 --mode=test`
-`yarn run build project1 --mode=prod`
-`yarn run build project1 --mode=test1`
+`yarn run build --projects=project1 --mode=test`
+`yarn run build --projects=project1 --mode=prod`
+`yarn run build --projects=project1 --mode=test1`
 
 
 ### 环境配置
@@ -234,17 +240,13 @@ yarn run create Project1  # 包含大写字母
 yarn run create project_1  # 包含下划线
 ```
 
-路径别名
+### 路径别名
 
-每个项目配置了两个路径别名：
-
-@ - 指向项目的 src 目录
 @common - 指向公共的 src/common 目录
 
 使用示例：
 
 ```javascript
-import App from '@/App.vue'
 import { formatDate } from '@common/utils'
 ```
 
