@@ -75,7 +75,7 @@ async function getProjectServer(projectName, env) {
       configFile: false,
       plugins: [vue()],
       root: projectPath,
-      base: `/${projectName}/`,
+      base: `/projects/${projectName}/`,
       resolve: {
         alias: {
           '@': path.join(projectPath, 'src'),
@@ -85,14 +85,14 @@ async function getProjectServer(projectName, env) {
       define: {
         'import.meta.env.PROJECT_NAME': JSON.stringify(projectName),
         'import.meta.env.ENV_TYPE': JSON.stringify(env),
-        'import.meta.env.BASE_URL': JSON.stringify(`/${projectName}/`)
+        'import.meta.env.BASE_URL': JSON.stringify(`/projects/${projectName}/`)
       },
       server: {
         middlewareMode: true,
         hmr: {
           protocol: 'ws',
           port: wsPort,
-          path: `/${projectName}/hmr`
+          path: `/projects/${projectName}/hmr`
         },
         fs: {
           strict: false
@@ -115,41 +115,48 @@ async function getProjectServer(projectName, env) {
 
 // 主服务器
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://localhost:${port}`)
-  
-  // 添加缓存控制头
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
-  res.setHeader('Pragma', 'no-cache')
-  res.setHeader('Expires', '0')
-  
-  // 解析项目名称
-  const pathParts = url.pathname.split('/').filter(Boolean)
-  const projectName = pathParts[0]
-  
-  // 过滤掉系统路径
-  const systemPaths = ['.well-known', 'favicon.ico', 'robots.txt', 'sitemap.xml']
-  if (systemPaths.includes(projectName)) {
-    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' })
-    res.end('Not Found')
-    return
-  }
-  
-  if (!projectName) {
-    // 显示项目列表
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+  try {
+    const url = new URL(req.url, `http://localhost:${port}`)
     
-    const projects = []
-    if (fs.existsSync(projectsDir)) {
-      const projectNames = fs.readdirSync(projectsDir)
-      projectNames.forEach(name => {
-        const projectPath = path.join(projectsDir, name)
-        if (fs.statSync(projectPath).isDirectory()) {
-          projects.push({ name, type: 'project' })
-        }
-      })
+    // 添加缓存控制头
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+    res.setHeader('Pragma', 'no-cache')
+    res.setHeader('Expires', '0')
+    
+    // 解析项目名称（支持projects前缀）
+    const pathParts = url.pathname.split('/').filter(Boolean)
+    let projectName = null
+    if (pathParts[0] === 'projects' && pathParts[1]) {
+      projectName = pathParts[1]
+    } else if (pathParts[0] && pathParts[0] !== 'projects') {
+      // 保持向后兼容，支持直接访问项目
+      projectName = pathParts[0]
     }
     
-    const html = `
+    // 过滤掉系统路径
+    const systemPaths = ['.well-known', 'favicon.ico', 'robots.txt', 'sitemap.xml']
+    if (systemPaths.includes(projectName)) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' })
+      res.end('Not Found')
+      return
+    }
+    
+    if (!projectName) {
+      // 显示项目列表
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+      
+      const projects = []
+      if (fs.existsSync(projectsDir)) {
+        const projectNames = fs.readdirSync(projectsDir)
+        projectNames.forEach(name => {
+          const projectPath = path.join(projectsDir, name)
+          if (fs.statSync(projectPath).isDirectory()) {
+            projects.push({ name, type: 'project' })
+          }
+        })
+      }
+      
+      const html = `
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -187,7 +194,7 @@ const server = http.createServer(async (req, res) => {
   <ul class="project-list">
     ${projects.map(p => `
       <li class="project-item">
-        <a href="/${p.name}/">
+        <a href="/projects/${p.name}/">
           <strong>${p.name}</strong>
           <span class="project-type">项目</span>
         </a>
@@ -197,59 +204,59 @@ const server = http.createServer(async (req, res) => {
 </body>
 </html>
     `
-    
-    res.end(html)
-    return
-  }
-  
-  // 获取环境参数
-  const env = url.searchParams.get('env') || 'test'
-  
-  // 项目切换逻辑
-  if (activeProject !== projectName) {
-    console.log(`[${new Date().toISOString()}] 检测到项目切换: ${activeProject} -> ${projectName}`)
-    
-    // 清理所有项目资源
-    const serversToClose = [...projectServers.entries()]
-    projectServers.clear() // 先清空，避免新请求创建新实例
-    
-    // 清理WebSocket连接
-    for (const [name, sockets] of projectWebSockets.entries()) {
-      console.log(`[${new Date().toISOString()}] 清理项目 ${name} 的WebSocket连接，共 ${sockets.size} 个`)
-      sockets.forEach(socket => {
-        try {
-          socket.destroy()
-        } catch (err) {
-          console.error(`关闭WebSocket连接失败:`, err)
-        }
-      })
+      
+      res.end(html)
+      return
     }
-    projectWebSockets.clear()
     
-    // 关闭服务器实例
-    for (const [name, server] of serversToClose) {
-      console.log(`[${new Date().toISOString()}] 清理项目 ${name} 的资源`)
-      try {
-        await server.close()
-        console.log(`[${new Date().toISOString()}] 项目 ${name} 服务器已关闭`)
-      } catch (err) {
-        console.error(`关闭项目 ${name} 服务器失败:`, err)
+    // 获取环境参数
+    const env = url.searchParams.get('env') || 'test'
+    
+    // 项目切换逻辑
+    if (activeProject !== projectName) {
+      console.log(`[${new Date().toISOString()}] 检测到项目切换: ${activeProject} -> ${projectName}`)
+      
+      // 清理所有项目资源
+      const serversToClose = [...projectServers.entries()]
+      projectServers.clear() // 先清空，避免新请求创建新实例
+      
+      // 清理WebSocket连接
+      for (const [name, sockets] of projectWebSockets.entries()) {
+        console.log(`[${new Date().toISOString()}] 清理项目 ${name} 的WebSocket连接，共 ${sockets.size} 个`)
+        sockets.forEach(socket => {
+          try {
+            socket.destroy()
+          } catch (err) {
+            console.error(`关闭WebSocket连接失败:`, err)
+          }
+        })
       }
+      projectWebSockets.clear()
+      
+      // 关闭服务器实例
+      for (const [name, server] of serversToClose) {
+        console.log(`[${new Date().toISOString()}] 清理项目 ${name} 的资源`)
+        try {
+          await server.close()
+          console.log(`[${new Date().toISOString()}] 项目 ${name} 服务器已关闭`)
+        } catch (err) {
+          console.error(`关闭项目 ${name} 服务器失败:`, err)
+        }
+      }
+      
+      // 清空锁
+      serverCreationLocks.clear()
+      
+      // 设置活跃项目
+      activeProject = projectName
+      console.log(`[${new Date().toISOString()}] 项目 ${projectName} 已设置为活跃项目`)
     }
     
-    // 清空锁
-    serverCreationLocks.clear()
-    
-    // 设置活跃项目
-    activeProject = projectName
-    console.log(`[${new Date().toISOString()}] 项目 ${projectName} 已设置为活跃项目`)
-  }
-  
-  // 检查项目是否存在
-  const projectPath = getProjectPath(projectName)
-  if (!projectPath) {
-    res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' })
-    res.end(`<!DOCTYPE html>
+    // 检查项目是否存在
+    const projectPath = getProjectPath(projectName)
+    if (!projectPath) {
+      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' })
+      res.end(`<!DOCTYPE html>
 <html>
 <head>
   <title>404 - 项目不存在</title>
@@ -265,32 +272,50 @@ const server = http.createServer(async (req, res) => {
   <p><a href="/">返回首页</a></p>
 </body>
 </html>`)
-    return
-  }
-  
-  try {
-    // 获取项目服务器
-    const viteServer = await getProjectServer(projectName, env)
+      return
+    }
     
-    // 重写路径
-    const projectPathPrefix = `/${projectName}`
-    const rewrittenUrl = url.pathname.startsWith(projectPathPrefix)
-      ? url.pathname.substring(projectPathPrefix.length) || '/' 
-      : url.pathname
-    const finalUrl = rewrittenUrl + url.search
-    
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} -> ${finalUrl} (活跃项目: ${activeProject})`)
-    
-    // 修改请求URL
-    const originalUrl = req.url
-    req.url = finalUrl
-    
-    // 转发给Vite中间件
-    viteServer.middlewares(req, res)
-    
-    // 恢复原始URL
-    req.url = originalUrl
-    
+    try {
+      console.log(`[${new Date().toISOString()}] 处理项目 ${projectName} 的请求，当前活跃项目: ${activeProject}`)
+      
+      // 确保当前项目是活跃项目
+      if (activeProject !== projectName) {
+        console.log(`[${new Date().toISOString()}] 项目 ${projectName} 不是活跃项目，重新设置`)
+        activeProject = projectName
+        console.log(`[${new Date().toISOString()}] 项目 ${projectName} 已设置为活跃项目`)
+      }
+      
+      // 获取项目服务器
+      console.log(`[${new Date().toISOString()}] 获取项目 ${projectName} 的服务器实例`)
+      const viteServer = await getProjectServer(projectName, env)
+      console.log(`[${new Date().toISOString()}] 项目 ${projectName} 的服务器实例获取成功`)
+      
+      // 重写路径（支持projects前缀）
+      let projectPathPrefix = `/${projectName}`
+      if (url.pathname.startsWith('/projects/')) {
+        projectPathPrefix = `/projects/${projectName}`
+      }
+      const rewrittenUrl = url.pathname.startsWith(projectPathPrefix)
+        ? url.pathname.substring(projectPathPrefix.length) || '/' 
+        : url.pathname
+      const finalUrl = rewrittenUrl + url.search
+      
+      console.log(`[${new Date().toISOString()}] 重写URL: ${req.url} -> ${finalUrl}`)
+      
+      // 转发请求
+      const originalUrl = req.url
+      req.url = finalUrl
+      
+      console.log(`[${new Date().toISOString()}] 转发请求给Vite中间件`)
+      viteServer.middlewares(req, res)
+      req.url = originalUrl
+      console.log(`[${new Date().toISOString()}] 请求处理完成`)
+      
+    } catch (err) {
+      console.error(`处理请求失败:`, err)
+      res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' })
+      res.end(err.message)
+    }
   } catch (err) {
     console.error(`处理请求失败:`, err)
     res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' })
@@ -303,7 +328,12 @@ server.on('upgrade', (req, socket, head) => {
   try {
     const url = new URL(req.url, `http://localhost:${port}`)
     const pathParts = url.pathname.split('/').filter(Boolean)
-    const projectName = pathParts[0]
+    let projectName = null
+    if (pathParts[0] === 'projects' && pathParts[1]) {
+      projectName = pathParts[1]
+    } else if (pathParts[0] && pathParts[0] !== 'projects') {
+      projectName = pathParts[0]
+    }
     
     // 只处理活跃项目的连接
     if (activeProject !== projectName) {
@@ -361,5 +391,6 @@ server.listen(port, () => {
   console.log(`🔄 访问新项目时会自动清空其他项目的构建和连接`)
   console.log(`⚡ 确保每个项目的开发环境完全隔离`)
   console.log(`🔥 已启用HMR功能，支持热模块替换`)
+  console.log(`📁 项目访问路径: http://localhost:${port}/projects/{项目名称}/`)
   console.log()
 })

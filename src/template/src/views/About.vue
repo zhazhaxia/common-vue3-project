@@ -1,112 +1,145 @@
 <template>
   <div class="about">
     <h2>关于 {{ projectName }}</h2>
-    <div class="info">
-      <h3>项目信息</h3>
-      <ul>
-        <li><strong>项目名称:</strong> {{ projectName }}</li>
-        <li><strong>当前环境:</strong> {{ currentEnv }}</li>
-        <li><strong>API地址:</strong> {{ apiBaseUrl }}</li>
-        <li><strong>应用ID:</strong> {{ appId }}</li>
-      </ul>
+    <p>这是 {{ projectName }} 项目的关于页面。</p>
+    <p>项目使用了以下技术栈：</p>
+    <ul>
+      <li>Vue 3</li>
+      <li>TypeScript</li>
+      <li>Vite</li>
+      <li>Vue Router</li>
+      <li>Pinia</li>
+    </ul>
+    
+    <!-- 组件通信示例 -->
+    <div class="section">
+      <h3>组件通信示例</h3>
+      <child-component 
+        :message="parentMessage"
+        @update:message="parentMessage = $event"
+        @custom-event="handleCustomEvent"
+      />
+      <p>父组件接收的消息: {{ childMessage }}</p>
     </div>
-    <div class="common-demo">
-      <h3>公共工具示例</h3>
-      <button @click="testCommonUtils">测试公共工具</button>
-      <p v-if="commonResult">结果: {{ commonResult }}</p>
+    
+
+    
+    <!-- 插槽示例 -->
+    <div class="section">
+      <h3>插槽示例</h3>
+      <slot-component>
+        <template #header>
+          <h4>自定义头部</h4>
+        </template>
+        <p>默认插槽内容</p>
+        <template #footer>
+          <p>自定义底部</p>
+        </template>
+      </slot-component>
+    </div>
+    
+    <!-- 路由传参示例 -->
+    <div class="section">
+      <h3>路由传参示例</h3>
+      <button @click="navigateWithParams">带参数导航</button>
+      <p v-if="routeParams">路由参数: {{ routeParams }}</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
 const projectName = import.meta.env.PROJECT_NAME || '未命名项目'
-const commonResult = ref<string | null>(null)
+const router = useRouter()
+const route = useRoute()
 
-const currentEnv = computed(() => import.meta.env.ENV_TYPE || 'unknown')
-const apiBaseUrl = computed(() => import.meta.env.VITE_APP_API_BASE_URL || 'not configured')
-const appId = computed(() => import.meta.env.VITE_APP_APP_ID || 'not configured')
+// 组件通信
+const parentMessage = ref('来自父组件的消息')
+const childMessage = ref('')
 
-const testCommonUtils = () => {
-  commonResult.value = '公共工具功能正常（请实现 src/common/utils/index.ts）'
+function handleCustomEvent(message: string) {
+  childMessage.value = message
+  console.log('接收到子组件事件:', message)
 }
+
+// 路由传参
+const routeParams = ref('')
+
+function navigateWithParams() {
+  router.push({
+    path: '/about',
+    query: {
+      id: '123',
+      name: 'test'
+    }
+  })
+}
+
+// 生命周期
+onMounted(() => {
+  // 检查路由参数
+  if (route.query) {
+    routeParams.value = JSON.stringify(route.query, null, 2)
+  }
+})
 </script>
 
 <style scoped>
 .about {
   max-width: 800px;
   margin: 0 auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
-h2 {
-  font-size: 2rem;
+.about h2 {
+  color: #667eea;
   margin-bottom: 1.5rem;
-  color: #333;
+  font-size: 2rem;
 }
 
-.info {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  margin-bottom: 2rem;
+.about h3 {
+  color: #555;
+  margin: 1.5rem 0 1rem 0;
 }
 
-.info h3 {
-  margin-top: 0;
-  color: #667eea;
+.about p {
+  margin: 0.8rem 0;
+  line-height: 1.6;
 }
 
-.info ul {
-  list-style: none;
-  padding: 0;
+.about ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
 }
 
-.info li {
-  padding: 0.8rem 0;
-  border-bottom: 1px solid #eee;
-  font-size: 1.1rem;
+.about li {
+  margin: 0.5rem 0;
 }
 
-.info li:last-child {
-  border-bottom: none;
+.section {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #f9f9f9;
+  border-radius: 6px;
 }
 
-.info strong {
-  color: #333;
-  margin-right: 1rem;
-}
-
-.common-demo {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-}
-
-.common-demo h3 {
-  margin-top: 0;
-  color: #667eea;
-}
-
-.common-demo button {
+button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
   background: #667eea;
   color: white;
-  border: none;
-  padding: 0.8rem 1.5rem;
-  border-radius: 6px;
   cursor: pointer;
-  font-size: 1rem;
   transition: background 0.3s;
+  margin: 0.5rem 0;
 }
 
-.common-demo button:hover {
-  background: #5568d3;
-}
-
-.common-demo p {
-  margin-top: 1rem;
-  color: #666;
+button:hover {
+  background: #5a6fd8;
 }
 </style>
