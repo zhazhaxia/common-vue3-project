@@ -76,7 +76,7 @@ async function getProjectServer(projectName, env, projectEnv = {}) {
     console.log(`环境配置: ${env}`);
 
     // 为每个项目生成唯一的WebSocket端口
-    const wsPort = 3001 + (Math.abs(projectName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 1000);
+    const wsPort = 30001 + (Math.abs(projectName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 10000);
     console.log(`项目 ${projectName} 的WebSocket端口: ${wsPort}`);
 
     // 为每个项目创建独立的Vite服务器实例
