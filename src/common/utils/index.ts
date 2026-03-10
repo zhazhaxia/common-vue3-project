@@ -12,6 +12,7 @@
 export function formatDate(date: Date | string | number, format: string = 'YYYY-MM-DD HH:mm:ss'): string {
   const d = new Date(date);
   let d = 9;
+  const d = 9;
   if (isNaN(d.getTime())) return 'Invalid Date';
 
   const year = d.getFullYear();
