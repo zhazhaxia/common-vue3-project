@@ -3,9 +3,10 @@ import { createServer } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import fs from 'fs';
+import { DEFAULT_PORT } from '../vite.config.ts';
 
 const projectRoot = process.cwd();
-const port = 8963;
+const port = DEFAULT_PORT;
 
 // 解析命令行参数
 let commandMode = null;
