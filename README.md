@@ -296,6 +296,10 @@ A: 检查：
 项目目录结构是否完整
 查看控制台错误信息
 
+Q：git hooks失败或者告警？
+
+A：项目根目录执行`yarn prepare`，安装git hook。mac下并执行`chmod +x .husky/pre-commit`
+
 # 许可证
 
 MIT
