@@ -4,8 +4,8 @@
   "description": "Vite + Vue3 + TypeScript Monorepo脚手架",
   "type": "module",
   "scripts": {
-    "serve": "node scripts/serve.js",
-    "build": "node scripts/build.js",
+    "serve": "node scripts/serve.js --mode test",
+    "build": "node scripts/build.js --mode prod",
     "create": "node scripts/create.js"
   },
   "devDependencies": {

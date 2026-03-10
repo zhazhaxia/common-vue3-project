@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <header>
-      <h1>{{ projectName }} - Vue3 + TypeScript 项目</h1>
+      <h1>{{ projectName }} - Vue3 + TypeScript 项目11</h1>
       <nav>
         <router-link to="/">首页</router-link>
         <router-link to="/about">关于</router-link>
@@ -35,7 +35,7 @@ import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useCounterStore } from './store/counter'
 
 // 环境变量
-const projectName = import.meta.env.PROJECT_NAME || '未命名项目'
+const projectName = import.meta.env.VITE_APP_TITLE || '未命名项目'
 const currentEnv = computed(() => import.meta.env.ENV_TYPE || 'unknown')
 const apiBaseUrl = computed(() => import.meta.env.VITE_APP_API_BASE_URL || '未配置')
 
@@ -55,7 +55,7 @@ onMounted(() => {
   // 模拟定时器
   timer.value = window.setInterval(() => {
     console.log('定时器执行')
-  }, 1000)
+  }, 5000)
 })
 
 // 生命周期 - 组件卸载
@@ -84,44 +84,6 @@ watch(
   { deep: true }
 )
 </script>
-
-<style scoped>
-.counter {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: rgba(255,255,255,0.2);
-  border-radius: 8px;
-}
-
-.counter h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.2rem;
-}
-
-.counter p {
-  margin: 0.3rem 0;
-}
-
-.counter-buttons {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.counter-buttons button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  background: rgba(255,255,255,0.3);
-  color: white;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.counter-buttons button:hover {
-  background: rgba(255,255,255,0.5);
-}
-</style>
 
 <style scoped>
 #app {
@@ -157,6 +119,42 @@ nav a {
 
 nav a:hover {
   background: rgba(255,255,255,0.2);
+}
+
+.counter {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px;
+}
+
+.counter h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+}
+
+.counter p {
+  margin: 0.3rem 0;
+}
+
+.counter-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.counter-buttons button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.3);
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.counter-buttons button:hover {
+  background: rgba(255,255,255,0.5);
 }
 
 main {

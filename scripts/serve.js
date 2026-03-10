@@ -5,7 +5,16 @@ import path from 'path'
 import fs from 'fs'
 
 const projectRoot = process.cwd()
-const port = 3000
+const port = 8963
+
+// 解析命令行参数
+let commandMode = null
+for (let i = 2; i < process.argv.length; i++) {
+  if (process.argv[i] === '--mode' && process.argv[i + 1]) {
+    commandMode = process.argv[i + 1]
+    break
+  }
+}
 
 const projectsDir = path.join(projectRoot, 'src/projects')
 
@@ -34,7 +43,7 @@ function getProjectPath(projectName) {
 }
 
 // 获取项目服务器
-async function getProjectServer(projectName, env) {
+async function getProjectServer(projectName, env, projectEnv = {}) {
   // 如果已经存在服务器实例，直接返回
   if (projectServers.has(projectName)) {
     return projectServers.get(projectName)
@@ -85,7 +94,14 @@ async function getProjectServer(projectName, env) {
       define: {
         'import.meta.env.PROJECT_NAME': JSON.stringify(projectName),
         'import.meta.env.ENV_TYPE': JSON.stringify(env),
-        'import.meta.env.BASE_URL': JSON.stringify(`/projects/${projectName}/`)
+        'import.meta.env.BASE_URL': JSON.stringify(`/projects/${projectName}/`),
+        // 注入环境变量
+        ...Object.fromEntries(
+          Object.entries(projectEnv).map(([key, value]) => [
+            `import.meta.env.${key}`,
+            JSON.stringify(value)
+          ])
+        )
       },
       server: {
         middlewareMode: true,
@@ -111,6 +127,34 @@ async function getProjectServer(projectName, env) {
     // 释放锁
     serverCreationLocks.delete(projectName)
   }
+}
+
+// 加载环境变量
+function loadEnv(projectPath, mode) {
+  const envFile = path.join(projectPath, `.env.${mode}`)
+  if (!fs.existsSync(envFile)) {
+    throw new Error(`环境文件 ${envFile} 不存在`)
+  }
+  
+  const env = {}
+  const content = fs.readFileSync(envFile, 'utf-8')
+  const lines = content.split('\n')
+  
+  for (const line of lines) {
+    // 忽略空行和注释
+    if (!line.trim() || line.trim().startsWith('#')) {
+      continue
+    }
+    
+    const [key, value] = line.split('=').map(item => item.trim())
+    if (key && value) {
+      // 移除引号
+      const cleanedValue = value.replace(/^['"](.*)['"]$/, '$1')
+      env[key] = cleanedValue
+    }
+  }
+  
+  return env
 }
 
 // 主服务器
@@ -172,8 +216,8 @@ const server = http.createServer(async (req, res) => {
       margin: 10px 0; 
       background: #f5f5f5; 
       border-radius: 5px;
-      cursor: pointer;
-      transition: background 0.3s;
+      cursor: pointer; 
+      transition: background 0.3s; 
     }
     .project-item:hover { background: #e0e0e0; }
     .project-type { 
@@ -210,7 +254,7 @@ const server = http.createServer(async (req, res) => {
     }
     
     // 获取环境参数
-    const env = url.searchParams.get('env') || 'test'
+    const env = commandMode || url.searchParams.get('env') || 'test'
     
     // 项目切换逻辑
     if (activeProject !== projectName) {
@@ -285,10 +329,45 @@ const server = http.createServer(async (req, res) => {
         console.log(`[${new Date().toISOString()}] 项目 ${projectName} 已设置为活跃项目`)
       }
       
-      // 获取项目服务器
-      console.log(`[${new Date().toISOString()}] 获取项目 ${projectName} 的服务器实例`)
-      const viteServer = await getProjectServer(projectName, env)
-      console.log(`[${new Date().toISOString()}] 项目 ${projectName} 的服务器实例获取成功`)
+      // 获取项目路径
+    const projectPath = getProjectPath(projectName)
+    if (!projectPath) {
+      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' })
+      res.end(`<!DOCTYPE html>
+<html>
+<head>
+  <title>404 - 项目不存在</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 60px 20px; 
+           background: #fef2f2; color: #991b1b; }
+    h1 { font-size: 4em; margin: 0; }
+  </style>
+</head>
+<body>
+  <h1>404</h1>
+  <p>项目 "${projectName}" 不存在</p>
+  <p><a href="/">返回首页</a></p>
+</body>
+</html>`)
+      return
+    }
+    
+    // 加载环境变量
+    let projectEnv = {}
+    try {
+      projectEnv = loadEnv(projectPath, env)
+      console.log(`[${new Date().toISOString()}] 成功加载项目 ${projectName} 的 .env.${env} 环境变量`)
+    } catch (error) {
+      console.error(`[${new Date().toISOString()}] 加载环境变量失败:`, error)
+      res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' })
+      res.end(error.message)
+      return
+    }
+    
+    // 获取项目服务器
+    console.log(`[${new Date().toISOString()}] 获取项目 ${projectName} 的服务器实例`)
+    const viteServer = await getProjectServer(projectName, env, projectEnv)
+    console.log(`[${new Date().toISOString()}] 项目 ${projectName} 的服务器实例获取成功`)
       
       // 重写路径（支持projects前缀）
       let projectPathPrefix = `/${projectName}`
@@ -392,5 +471,8 @@ server.listen(port, () => {
   console.log(`⚡ 确保每个项目的开发环境完全隔离`)
   console.log(`🔥 已启用HMR功能，支持热模块替换`)
   console.log(`📁 项目访问路径: http://localhost:${port}/projects/{项目名称}/`)
+  if (commandMode) {
+    console.log(`🎯 命令行指定环境: ${commandMode}`)
+  }
   console.log()
 })

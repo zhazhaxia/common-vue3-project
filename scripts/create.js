@@ -83,10 +83,10 @@ function createProjectStructure(projectName) {
   
   createEnvFiles(projectPath, projectName)
   
-  const gitignorePath = path.join(projectPath, '.gitignore')
-  const gitignoreContent = `node_modules\n.DS_Store\n*.log\ndist\n`
-  fs.writeFileSync(gitignorePath, gitignoreContent, 'utf-8')
-  console.log(`   ✅ 创建: .gitignore`)
+  // const gitignorePath = path.join(projectPath, '.gitignore')
+  // const gitignoreContent = `node_modules\n.DS_Store\n*.log\ndist\n`
+  // fs.writeFileSync(gitignorePath, gitignoreContent, 'utf-8')
+  // console.log(`   ✅ 创建: .gitignore`)
   
   console.log(`\n✅ 项目创建完成!\n`)
   console.log(`📋 下一步操作:`)

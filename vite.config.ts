@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
     return {
       plugins: [vue()],
       server: {
-        port: 3000,
+        port: 8963,
         middlewareMode: true
       }
     }
