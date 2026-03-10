@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <header>
-      <h1>{{ projectName }} - Vue3 + TypeScript 项目</h1>
+      <h1>{{ projectName }} - Vue3 + TypeScript 项目1</h1>
       <nav>
         <router-link to="/">首页</router-link>
         <router-link to="/about">关于</router-link>

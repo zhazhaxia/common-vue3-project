@@ -27,14 +27,12 @@
       "@common/*": [
         "src/common/*"
       ]
-    }
+    },
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "src/**/*.js",
+    "src/**/*",
     "vite-env.d.ts"
   ],
   "references": []
