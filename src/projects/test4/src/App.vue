@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <header>
-      <h1>{{ projectName }} - Vue3 + TypeScript 项目22</h1>
+      <h1>{{ projectName }} - Vue3 + TypeScript 项目</h1>
       <nav>
         <router-link to="/">首页</router-link>
         <router-link to="/about">关于</router-link>
@@ -21,6 +21,7 @@
     <main>
       <router-view />
     </main>
+    <img src="@common/assets/evil-js.jpg" alt="项目logo" />
     <footer>
       <p>当前环境: {{ currentEnv }}</p>
       <p>API地址: {{ apiBaseUrl }}</p>
