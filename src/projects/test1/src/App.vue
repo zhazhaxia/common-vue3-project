@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <header>
-      <h1>{{ projectName }} - Vue3 + TypeScript 项目11</h1>
+      <h1>{{ projectName }} - Vue3 + TypeScript 项目</h1>
       <nav>
         <router-link to="/">首页</router-link>
         <router-link to="/about">关于</router-link>
@@ -33,12 +33,9 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import { useCounterStore } from './store/counter';
-// import { debounce } from "@common/utils"
-// console.log(debounce)
-console.log('=======start=====');
 
 // 环境变量
-const projectName = import.meta.env.VITE_APP_TITLE || '未命名项目';
+const projectName = import.meta.env.PROJECT_NAME || '未命名项目';
 const currentEnv = computed(() => import.meta.env.ENV_TYPE || 'unknown');
 const apiBaseUrl = computed(() => import.meta.env.VITE_APP_API_BASE_URL || '未配置');
 
@@ -89,41 +86,6 @@ watch(
 </script>
 
 <style scoped>
-#app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 1.5rem 2rem;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-header h1 {
-  margin: 0 0 1rem 0;
-  font-size: 1.8rem;
-}
-
-nav {
-  display: flex;
-  gap: 1.5rem;
-}
-
-nav a {
-  color: white;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  transition: background 0.3s;
-}
-
-nav a:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
 .counter {
   margin-top: 1rem;
   padding: 1rem;
@@ -158,6 +120,43 @@ nav a:hover {
 
 .counter-buttons button:hover {
   background: rgba(255, 255, 255, 0.5);
+}
+</style>
+
+<style scoped>
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+  margin: 0 0 1rem 0;
+  font-size: 1.8rem;
+}
+
+nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: background 0.3s;
+}
+
+nav a:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 main {

@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <header>
-      <h1>{{ projectName }} - Vue3 + TypeScript 项目222</h1>
+      <h1>{{ projectName }} - Vue3 + TypeScript 项目</h1>
       <nav>
         <router-link to="/">首页</router-link>
         <router-link to="/about">关于</router-link>
@@ -55,7 +55,7 @@ onMounted(() => {
   // 模拟定时器
   timer.value = window.setInterval(() => {
     console.log('定时器执行');
-  }, 1000);
+  }, 5000);
 });
 
 // 生命周期 - 组件卸载
