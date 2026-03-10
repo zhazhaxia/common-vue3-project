@@ -2,6 +2,8 @@
 
 一个基于 Vite + Vue3 + TypeScript 的 Monorepo 脚手架，支持多项目管理、按需构建、环境隔离等功能。
 
+- https://github.com/zhazhaxia/common-vue3-project
+
 # 核心特性
 
 - 📦 模板化项目 - 基于模板快速创建新项目，保持项目结构统一。开箱即用。
