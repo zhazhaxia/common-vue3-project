@@ -21,6 +21,7 @@
     <main>
       <router-view />
     </main>
+    <img src="@common/assets/evil-js.jpg" alt="项目logo" />
     <footer>
       <p>当前环境: {{ currentEnv }}</p>
       <p>API地址: {{ apiBaseUrl }}</p>

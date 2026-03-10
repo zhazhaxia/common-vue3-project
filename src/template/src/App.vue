@@ -21,6 +21,7 @@
     <main>
       <router-view />
     </main>
+    <img src="@common/assets/evil-js.jpg" alt="项目logo" />
     <footer>
       <p>当前环境: {{ currentEnv }}</p>
       <p>API地址: {{ apiBaseUrl }}</p>
@@ -31,65 +32,65 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
-import { useCounterStore } from './store/counter'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
+import { useCounterStore } from './store/counter';
 
 // 环境变量
-const projectName = import.meta.env.PROJECT_NAME || '未命名项目'
-const currentEnv = computed(() => import.meta.env.ENV_TYPE || 'unknown')
-const apiBaseUrl = computed(() => import.meta.env.VITE_APP_API_BASE_URL || '未配置')
+const projectName = import.meta.env.PROJECT_NAME || '未命名项目';
+const currentEnv = computed(() => import.meta.env.ENV_TYPE || 'unknown');
+const apiBaseUrl = computed(() => import.meta.env.VITE_APP_API_BASE_URL || '未配置');
 
 // Pinia store
-const counterStore = useCounterStore()
+const counterStore = useCounterStore();
 
 // 响应式数据
-const loadTime = ref('')
-const countChangeTimes = ref(0)
-const timer = ref<number | null>(null)
+const loadTime = ref('');
+const countChangeTimes = ref(0);
+const timer = ref<number | null>(null);
 
 // 生命周期 - 组件挂载
 onMounted(() => {
-  console.log('组件已挂载')
-  loadTime.value = new Date().toLocaleString()
-  
+  console.log('组件已挂载');
+  loadTime.value = new Date().toLocaleString();
+
   // 模拟定时器
   timer.value = window.setInterval(() => {
-    console.log('定时器执行')
-  }, 5000)
-})
+    console.log('定时器执行');
+  }, 5000);
+});
 
 // 生命周期 - 组件卸载
 onUnmounted(() => {
-  console.log('组件已卸载')
+  console.log('组件已卸载');
   if (timer.value) {
-    clearInterval(timer.value)
+    clearInterval(timer.value);
   }
-})
+});
 
 // 监听数据变化
 watch(
   () => counterStore.count,
   (newValue, oldValue) => {
-    console.log(`计数器从 ${oldValue} 变为 ${newValue}`)
-    countChangeTimes.value++
+    console.log(`计数器从 ${oldValue} 变为 ${newValue}`);
+    countChangeTimes.value++;
   }
-)
+);
 
 // 深度监听示例
 watch(
   counterStore,
   (newStore) => {
-    console.log('Store 发生变化:', newStore)
+    console.log('Store 发生变化:', newStore);
   },
   { deep: true }
-)
+);
 </script>
 
 <style scoped>
 .counter {
   margin-top: 1rem;
   padding: 1rem;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 8px;
 }
 
@@ -112,14 +113,14 @@ watch(
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 4px;
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
   color: white;
   cursor: pointer;
   transition: background 0.3s;
 }
 
 .counter-buttons button:hover {
-  background: rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.5);
 }
 </style>
 
@@ -134,7 +135,7 @@ header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 1.5rem 2rem;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 header h1 {
@@ -156,7 +157,7 @@ nav a {
 }
 
 nav a:hover {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 main {
@@ -170,7 +171,7 @@ footer {
   padding: 1.5rem 2rem;
   text-align: center;
   color: #666;
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.05);
 }
 
 footer p {
