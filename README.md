@@ -4,35 +4,34 @@
 
 # 核心特性
 
+- 📦 模板化项目 - 基于模板快速创建新项目，保持项目结构统一。开箱即用。
+  - 支持使用yarn run create projectName来创建新项目
+  - 新项目会基于template目录下的模板创建，保持项目结构统一
+  - 单仓多项目，项目按需运行，提升性能
+
 - 🚀 按需构建 - 访问项目时才触发构建，避免资源浪费
-  - 比如访问 http://localhost:8963/projects/test1/index.html 只会构建和调试test1项目，而不会构建其他项目，访问test2项目时也只会构建和调试test2项目
+  - 比如访问 http://localhost:8963/projects/test1/index.html 只会构建和调试test1项目，而不会构建其他项目
+  - 访问test2项目时也只会构建和调试test2项目，而不会去构建test1项目
 
 - 🔧 环境隔离 - 每个项目独立的环境配置，支持 test/prod 等多环境
 
-- 📦 模板化 - 基于模板快速创建新项目，保持项目结构统一
-  - 支持使用yarn run create projectName来创建新项目
-  - 新项目会基于template目录下的模板创建，保持项目结构统一
-
 - 🛠️ 公共工具 - 统一的 src/common 目录，存放项目间共享的工具和函数
+  - 多个项目复用同类型工具，避免重复工作，保持代码质量和一致性
 
 - ⚡ TypeScript 支持 - 完整的 TypeScript 类型定义和类型检查
 
-- 🎯 类型安全 - 所有公共模块都有完整的类型定义
-
-- 打包 - 支持使用yarn run build --projects=projectName来打包项目，支持test/prod等多环境
+- 打包构建 - 支持使用yarn run build --projects=projectName来打包项目，支持test/prod等多环境
   - 比如使用yarn run build --projects=test1 --mode=prod来打包test1项目的生产环境
   - 打包后的文件会输出到dist目录下，每个项目的打包文件会放在对应的子目录下，比如test1项目的打包文件会放在dist/projects/test1目录下
   - 每个项目的打包文件都有一个对应的index.html文件，用于访问项目
 
-# 优点
+- 统一协作规范
+  - 每个项目都有一个对应的开发分支、测试分支、主分支
+  - 代码格式统一：使用eslint进行代码规范检查、同时进行代码格式化（若不生效参考底部FAQ）
+  - 统一创建项目指令：yarn run create projectName
+  - 统一构建项目指令：yarn run build --projects=projectName --mode=prod
+  - 统一环境设置：.env.test, .env.prod, .env.custom
 
-- 简单易用 - 基于模板创建新项目，无需复杂配置
-- 高度可定制 - 可以根据项目需求自定义模板和环境配置
-- 快速启动 - 无需等待项目构建完成，即可访问项目
-- 资源优化 - 每个项目的资源只打包到对应的目录，避免资源冲突
-- 环境隔离 - 每个项目独立的环境配置，支持 test/prod 等多环境
-- 单仓库管理 - 所有项目都在同一个仓库中管理，方便同类型项目协作
-- 统一指令 - 所有项目都使用相同的指令来管理，方便协作
 
 # 快速开始
 
