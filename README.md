@@ -188,6 +188,12 @@ VITE_APP_APP_ID=project1_prod
 
 `yarn run build project1 --mode=test1`
 
+### 单元测试
+
+- 测试用例目录：/src/common/utils/__tests__/
+
+- 执行单测：`yarn run test`
+
 
 ### 公共工具
 
