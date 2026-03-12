@@ -8,5 +8,6 @@ const pinia = createPinia();
 
 console.log('===');
 app.use(router);
+console().d;
 app.use(pinia);
 app.mount('#app');
