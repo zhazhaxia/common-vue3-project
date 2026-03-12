@@ -5,7 +5,7 @@ import router from './router';
 
 const app = createApp(App);
 const pinia = createPinia();
-qa();
+qaa();
 app.use(router);
 app.use(pinia);
 app.mount('#app');

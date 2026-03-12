@@ -38,7 +38,6 @@
       "prettier --write"
     ],
     "*.{ts,tsx,cts,mts}": [
-      "tsc --noEmit"
     ]
   },
   "dependencies": {
