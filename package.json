@@ -36,8 +36,6 @@
     "*.{vue,js,jsx,cjs,mjs,ts,tsx,cts,mts}": [
       "eslint --fix",
       "prettier --write"
-    ],
-    "*.{ts,tsx,cts,mts}": [
     ]
   },
   "dependencies": {

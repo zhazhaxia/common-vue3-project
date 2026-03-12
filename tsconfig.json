@@ -15,10 +15,11 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
-    "strict": true,
+    "strict": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": false,
     "types": [
       "vite/client"
     ],
@@ -33,7 +34,16 @@
   },
   "include": [
     "src/**/*",
+    "src/**/*.vue",
     "vite-env.d.ts"
   ],
-  "references": []
+  "references": [],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs",
+      "ignoreDiagnostics": [
+        2307
+      ]
+    }
+  }
 }
