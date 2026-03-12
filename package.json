@@ -9,7 +9,7 @@
     "create": "node scripts/create.js",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "prettier": "prettier --write . --ignore-path .gitignore",
-    "prepare": "husky install",
+    "prepare": "husky install && node scripts/setup-hooks.js",
     "test": "vitest run"
   },
   "devDependencies": {
@@ -36,6 +36,8 @@
     "*.{vue,js,jsx,cjs,mjs,ts,tsx,cts,mts}": [
       "eslint --fix",
       "prettier --write"
+    ],
+    "*.{ts,tsx,cts,mts}": [
     ]
   },
   "dependencies": {
