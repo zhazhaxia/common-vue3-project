@@ -14,19 +14,19 @@
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@vitejs/plugin-vue": "^5.0.0",
+    "@vue/eslint-config-prettier": "^8.0.0",
+    "@vue/eslint-config-typescript": "^12.0.0",
     "dotenv": "^16.3.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-vue": "^9.19.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.2.4",
+    "terser": "^5.20.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.0",
     "vue": "^3.4.0",
-    "vue-tsc": "^1.8.27",
-    "eslint": "^8.56.0",
-    "eslint-plugin-vue": "^9.19.2",
-    "@vue/eslint-config-typescript": "^12.0.0",
-    "@vue/eslint-config-prettier": "^8.0.0",
-    "prettier": "^3.2.4",
-    "husky": "^8.0.3",
-    "lint-staged": "^15.2.0",
-    "terser": "^5.20.0"
+    "vue-tsc": "^1.8.27"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -38,6 +38,7 @@
     ]
   },
   "dependencies": {
+    "axios": "^1.13.6",
     "pinia": "^3.0.4",
     "vue-router": "^5.0.3"
   }

@@ -1,3 +1,8 @@
+/**
+ * 开发服务器脚本
+ * 用于启动多项目开发服务器，支持项目切换、环境隔离和热模块替换
+ */
+
 import http from 'http';
 import { createServer } from 'vite';
 import vue from '@vitejs/plugin-vue';
@@ -8,7 +13,7 @@ import { DEFAULT_PORT } from '../vite.config.ts';
 const projectRoot = process.cwd();
 const port = DEFAULT_PORT;
 
-// 解析命令行参数
+// 解析命令行参数，获取环境模式
 let commandMode = null;
 for (let i = 2; i < process.argv.length; i++) {
   if (process.argv[i] === '--mode' && process.argv[i + 1]) {
@@ -28,10 +33,14 @@ let activeProject = null;
 // 存储项目的WebSocket连接，使用项目名称作为键
 const projectWebSockets = new Map();
 
-// 防止并发创建服务器实例
+// 防止并发创建服务器实例的锁
 const serverCreationLocks = new Map();
 
-// 获取项目路径
+/**
+ * 获取项目路径
+ * @param {string} projectName - 项目名称
+ * @returns {string|null} 项目路径，如果项目不存在则返回null
+ */
 function getProjectPath(projectName) {
   const projectPath = path.join(projectsDir, projectName);
   if (fs.existsSync(projectPath) && fs.statSync(projectPath).isDirectory()) {
@@ -43,7 +52,13 @@ function getProjectPath(projectName) {
   return null;
 }
 
-// 获取项目服务器
+/**
+ * 获取项目服务器实例
+ * @param {string} projectName - 项目名称
+ * @param {string} env - 环境配置名称
+ * @param {Object} projectEnv - 项目环境变量
+ * @returns {Promise<Object>} Vite服务器实例
+ */
 async function getProjectServer(projectName, env, projectEnv = {}) {
   // 如果已经存在服务器实例，直接返回
   if (projectServers.has(projectName)) {
@@ -82,16 +97,17 @@ async function getProjectServer(projectName, env, projectEnv = {}) {
 
     // 为每个项目创建独立的Vite服务器实例
     const viteServer = await createServer({
-      configFile: false,
-      plugins: [vue()],
-      root: projectPath,
-      base: `/projects/${projectName}/`,
+      configFile: false, // 不使用配置文件
+      plugins: [vue()], // 使用Vue插件
+      root: projectPath, // 项目根目录
+      base: `/projects/${projectName}/`, // 基础路径，用于CDN部署
       resolve: {
         alias: {
-          '@common': path.join(projectRoot, 'src/common'),
+          '@common': path.join(projectRoot, 'src/common'), // 公共代码路径别名
         },
       },
       define: {
+        // 定义环境变量
         'import.meta.env.PROJECT_NAME': JSON.stringify(projectName),
         'import.meta.env.ENV_TYPE': JSON.stringify(env),
         'import.meta.env.BASE_URL': JSON.stringify(`/projects/${projectName}/`),
@@ -101,20 +117,20 @@ async function getProjectServer(projectName, env, projectEnv = {}) {
         ),
       },
       server: {
-        middlewareMode: true,
+        middlewareMode: true, // 中间件模式
         hmr: {
-          protocol: 'ws',
-          host: '127.0.0.1',
-          port: wsPort,
-          path: `/hmr`,
+          protocol: 'ws', // WebSocket协议
+          host: '127.0.0.1', // 主机地址
+          port: wsPort, // WebSocket端口
+          path: `/hmr`, // HMR路径
         },
         fs: {
-          strict: false,
+          strict: false, // 非严格模式，允许访问项目外的文件
         },
       },
-      cacheDir: path.join(projectPath, 'node_modules', '.vite'),
-      clearScreen: false,
-      logLevel: 'info',
+      cacheDir: path.join(projectPath, 'node_modules', '.vite'), // 缓存目录
+      clearScreen: false, // 不清空屏幕
+      logLevel: 'info', // 日志级别
     });
 
     projectServers.set(projectName, viteServer);
@@ -127,7 +143,12 @@ async function getProjectServer(projectName, env, projectEnv = {}) {
   }
 }
 
-// 加载环境变量
+/**
+ * 加载项目的环境变量
+ * @param {string} projectPath - 项目路径
+ * @param {string} mode - 环境模式
+ * @returns {Object} 环境变量对象
+ */
 function loadEnv(projectPath, mode) {
   const envFile = path.join(projectPath, `.env.${mode}`);
   if (!fs.existsSync(envFile)) {
@@ -160,7 +181,7 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://localhost:${port}`);
 
-    // 添加缓存控制头
+    // 添加缓存控制头，确保每次都获取最新内容
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
@@ -383,7 +404,7 @@ const server = http.createServer(async (req, res) => {
 
       console.log(`[${new Date().toISOString()}] 重写URL: ${req.url} -> ${finalUrl}`);
 
-      // 转发请求
+      // 转发请求给Vite中间件
       const originalUrl = req.url;
       req.url = finalUrl;
 
@@ -403,10 +424,13 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-// 处理WebSocket连接
+/**
+ * 处理WebSocket连接
+ * 用于支持热模块替换（HMR）功能
+ */
 server.on('upgrade', (req, socket, head) => {
   try {
-    // 检查请求头中的协议
+    // 检查请求头中的协议，确定使用ws还是wss
     const isSecure = req.headers['x-forwarded-proto'] === 'https' || req.connection.encrypted;
     const protocol = isSecure ? 'wss' : 'ws';
 
@@ -458,6 +482,7 @@ server.on('upgrade', (req, socket, head) => {
           }
         });
 
+        // 触发Vite的WebSocket连接事件
         viteServer.ws.emit('connection', ws, req);
       });
 
@@ -479,6 +504,7 @@ server.on('upgrade', (req, socket, head) => {
   }
 });
 
+// 启动服务器
 server.listen(port, () => {
   console.log(`\n🚀 开发服务器启动成功！`);
   console.log(`📝 访问地址: http://localhost:${port}`);
