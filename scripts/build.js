@@ -241,6 +241,9 @@ async function main() {
     console.log(`✅ 成功: ${successCount} 个项目`);
     console.log(`❌ 失败: ${projects.length - successCount} 个项目`);
     console.log();
+    if (successCount !== projects.length) {
+      throw new Error(`构建失败: ${projects.length - successCount} 个项目`);
+    }
   } catch (error) {
     console.error(`\n❌ 构建过程中发生错误:`);
     console.error(error);
