@@ -18,7 +18,7 @@ let commandMode = null;
 for (let i = 2; i < process.argv.length; i++) {
   if (process.argv[i] === '--mode' && process.argv[i + 1]) {
     commandMode = process.argv[i + 1];
-    break;
+    // 继续遍历，使用最后一个--mode参数
   }
 }
 
