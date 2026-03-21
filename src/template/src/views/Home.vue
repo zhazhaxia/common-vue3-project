@@ -56,7 +56,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-
+import { useRoute } from 'vue-router';
+const route = useRoute();
+console.log('=====route.query home.vue', route.query);
 // 环境变量
 const projectName = import.meta.env.PROJECT_NAME || '未命名项目';
 const currentEnv = computed(() => import.meta.env.ENV_TYPE || 'unknown');

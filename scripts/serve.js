@@ -160,12 +160,23 @@ function loadEnv(projectPath, mode) {
   const lines = content.split('\n');
 
   for (const line of lines) {
-    // 忽略空行和注释
-    if (!line.trim() || line.trim().startsWith('#')) {
+    // 忽略空行
+    if (!line.trim()) {
       continue;
     }
 
-    const [key, value] = line.split('=').map((item) => item.trim());
+    // 忽略注释行（以 # 开头的行）
+    if (line.trim().startsWith('#')) {
+      continue;
+    }
+
+    // 处理带空格的情况，使用第一个等号作为分隔符
+    const equalsIndex = line.indexOf('=');
+    if (equalsIndex === -1) {
+      continue;
+    }
+    const key = line.substring(0, equalsIndex).trim();
+    const value = line.substring(equalsIndex + 1).trim();
     if (key && value) {
       // 移除引号
       const cleanedValue = value.replace(/^['"](.*)['"]$/, '$1');

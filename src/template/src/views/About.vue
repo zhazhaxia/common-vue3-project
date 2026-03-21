@@ -10,20 +10,18 @@
       <li>Vue Router</li>
       <li>Pinia</li>
     </ul>
-    
+
     <!-- 组件通信示例 -->
     <div class="section">
       <h3>组件通信示例</h3>
-      <child-component 
+      <child-component
         :message="parentMessage"
         @update:message="parentMessage = $event"
         @custom-event="handleCustomEvent"
       />
       <p>父组件接收的消息: {{ childMessage }}</p>
     </div>
-    
 
-    
     <!-- 插槽示例 -->
     <div class="section">
       <h3>插槽示例</h3>
@@ -37,7 +35,7 @@
         </template>
       </slot-component>
     </div>
-    
+
     <!-- 路由传参示例 -->
     <div class="section">
       <h3>路由传参示例</h3>
@@ -48,42 +46,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
-const projectName = import.meta.env.PROJECT_NAME || '未命名项目'
-const router = useRouter()
-const route = useRoute()
+const projectName = import.meta.env.PROJECT_NAME || '未命名项目';
+const router = useRouter();
+const route = useRoute();
+console.log('=====route.query about.vue', route.query);
 
 // 组件通信
-const parentMessage = ref('来自父组件的消息')
-const childMessage = ref('')
+const parentMessage = ref('来自父组件的消息');
+const childMessage = ref('');
 
 function handleCustomEvent(message: string) {
-  childMessage.value = message
-  console.log('接收到子组件事件:', message)
+  childMessage.value = message;
+  console.log('接收到子组件事件:', message);
 }
 
 // 路由传参
-const routeParams = ref('')
+const routeParams = ref('');
 
 function navigateWithParams() {
   router.push({
     path: '/about',
     query: {
       id: '123',
-      name: 'test'
-    }
-  })
+      name: 'test',
+    },
+  });
 }
 
 // 生命周期
 onMounted(() => {
   // 检查路由参数
   if (route.query) {
-    routeParams.value = JSON.stringify(route.query, null, 2)
+    routeParams.value = JSON.stringify(route.query, null, 2);
   }
-})
+});
 </script>
 
 <style scoped>
@@ -93,7 +92,7 @@ onMounted(() => {
   background: white;
   padding: 2rem;
   border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .about h2 {

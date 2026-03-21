@@ -91,10 +91,25 @@ function loadProjectEnv(projectName, env) {
   if (fs.existsSync(envPath)) {
     const envContent = fs.readFileSync(envPath, 'utf-8');
     envContent.split('\n').forEach((line) => {
-      const [key, ...valueParts] = line.split('=');
-      const value = valueParts.join('=');
+      // 忽略空行
+      if (!line.trim()) {
+        return;
+      }
+
+      // 忽略注释行（以 # 开头的行）
+      if (line.trim().startsWith('#')) {
+        return;
+      }
+
+      // 处理带空格的情况，使用第一个等号作为分隔符
+      const equalsIndex = line.indexOf('=');
+      if (equalsIndex === -1) {
+        return;
+      }
+      const key = line.substring(0, equalsIndex).trim();
+      const value = line.substring(equalsIndex + 1).trim();
       if (key && value) {
-        envVars[key] = value.trim();
+        envVars[key] = value;
       }
     });
   }
