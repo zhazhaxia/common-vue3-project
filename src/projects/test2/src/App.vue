@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <header>
-      <h1>{{ projectName }} - Vue3 + TypeScript 项目1</h1>
+      <h1 class="app-title">{{ projectName }} - Vue3 + TypeScript 项目1</h1>
       <nav>
         <span @click="handleToRouter('/')">首页</span>
         <span @click="handleToRouter('/about')">关于</span>
@@ -34,6 +34,8 @@
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import { useCounterStore } from './store/counter';
 import { useRouter } from 'vue-router';
+import './styles/app.less';
+
 const router = useRouter();
 // 环境变量w
 const projectName = import.meta.env.PROJECT_NAME || '未命名项目';
