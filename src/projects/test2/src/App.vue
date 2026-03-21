@@ -1,10 +1,10 @@
 <template>
   <div id="app">
     <header>
-      <h1>{{ projectName }} - Vue3 + TypeScript 项目22</h1>
+      <h1>{{ projectName }} - Vue3 + TypeScript 项目1</h1>
       <nav>
-        <router-link to="/">首页</router-link>
-        <router-link to="/about">关于</router-link>
+        <span @click="handleToRouter('/')">首页</span>
+        <span @click="handleToRouter('/about')">关于</span>
       </nav>
       <div class="counter">
         <h3>{{ counterStore.name }}</h3>
@@ -33,8 +33,9 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 import { useCounterStore } from './store/counter';
-
-// 环境变量
+import { useRouter } from 'vue-router';
+const router = useRouter();
+// 环境变量w
 const projectName = import.meta.env.PROJECT_NAME || '未命名项目';
 const currentEnv = computed(() => import.meta.env.ENV_TYPE || 'unknown');
 const apiBaseUrl = computed(() => import.meta.env.VITE_APP_API_BASE_URL || '未配置');
@@ -46,7 +47,6 @@ const counterStore = useCounterStore();
 const loadTime = ref('');
 const countChangeTimes = ref(0);
 const timer = ref<number | null>(null);
-
 // 生命周期 - 组件挂载
 onMounted(() => {
   console.log('组件已挂载');
@@ -83,6 +83,16 @@ watch(
   },
   { deep: true }
 );
+
+// 路由跳转
+const handleToRouter = (path: string) => {
+  router.push({
+    path,
+    query: {
+      random: Date.now(),
+    },
+  });
+};
 </script>
 
 <style scoped>

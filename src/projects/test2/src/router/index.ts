@@ -1,5 +1,6 @@
 // src/projects/test1/src/router/index.ts
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router';
+import { routerHashFixQuery } from '@common/utils/router-hash-fix-query';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -18,4 +19,4 @@ const router = createRouter({
   routes,
 });
 
-export default router;
+export default routerHashFixQuery(router);
